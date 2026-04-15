@@ -8,61 +8,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar código
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Instalar Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Criar estrutura Android
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Criar projeto Android completo
         run: |
           mkdir -p app/src/main/java/com/aim/pro
           mkdir -p app/src/main/res/layout
 
-      - name: Criar AndroidManifest
-        run: |
-          cat <<EOF > app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.aim.pro">
-
-              <application android:label="AimPro">
-                  <activity android:name=".MainActivity">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-      - name: Criar MainActivity
-        run: |
-          cat <<EOF > app/src/main/java/com/aim/pro/MainActivity.kt
-          package com.aim.pro
-
-          import android.os.Bundle
-          import android.widget.TextView
-          import androidx.appcompat.app.AppCompatActivity
-
-          class MainActivity : AppCompatActivity() {
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-
-                  val tv = TextView(this)
-                  tv.text = "AimPro funcionando 🔥"
-                  tv.textSize = 24f
-
-                  setContentView(tv)
-              }
-          }
-          EOF
-
-      - name: Criar Gradle
-        run: |
           cat <<EOF > settings.gradle
           rootProject.name = "AimPro"
           include ':app'
@@ -102,15 +64,44 @@ jobs:
           }
           EOF
 
-      - name: Build APK
-        run: |
-          chmod +x gradlew || true
-          ./gradlew assembleDebug || echo "gradle wrapper not present"
+          cat <<EOF > app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application android:label="AimPro">
+                  <activity android:name=".MainActivity">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
 
-      - name: Gerar APK manual (fallback)
-        run: |
-          mkdir -p app/build/outputs/apk/debug
-          echo "Fake APK - substituído se build funcionar" > app/build/outputs/apk/debug/app-debug.apk
+          cat <<EOF > app/src/main/java/com/aim/pro/MainActivity.kt
+          package com.aim.pro
+
+          import android.os.Bundle
+          import android.widget.TextView
+          import androidx.appcompat.app.AppCompatActivity
+
+          class MainActivity : AppCompatActivity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+
+                  val tv = TextView(this)
+                  tv.text = "AimPro REAL funcionando 🚀"
+                  tv.textSize = 24f
+
+                  setContentView(tv)
+              }
+          }
+          EOF
+
+      - name: Gerar gradlew
+        run: gradle wrapper
+
+      - name: Build APK
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
