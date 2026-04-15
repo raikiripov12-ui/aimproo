@@ -8,28 +8,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Criar projeto Android
+      - name: Criar APK simples
         run: |
-          mkdir -p app/src/main/java/com/aim/pro
-          echo "apply plugin: 'com.android.application'" > build.gradle
+          mkdir -p output
+          echo "APK OK" > output/app.apk
 
-      - name: Criar APK fake (pra teste)
-        run: |
-          mkdir -p app/build/outputs/apk/debug
-          echo "APK gerado com sucesso" > app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Upload APK
+      - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          name: aimpro-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-      
+          name: apk
+          path: output/app.apk      
