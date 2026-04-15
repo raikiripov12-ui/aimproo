@@ -1,82 +1,68 @@
-name: Build AimPro APK
+- name: Substituir código pelo AimPro
+  run: |
+    mkdir -p app/app/src/main/java/com/aim/pro
 
-on:
-  workflow_dispatch:
+    # APAGA activity antiga
+    rm -rf app/app/src/main/java
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    mkdir -p app/app/src/main/java/com/aim/pro
 
-    steps:
-      - name: Criar projeto
-        run: |
-          git clone https://github.com/android/architecture-samples.git app
+    cat <<EOF > app/app/src/main/java/com/aim/pro/MainActivity.kt
+    package com.aim.pro
 
-      - name: Substituir código pelo AimPro
-        run: |
-          mkdir -p app/app/src/main/java/com/aim/pro
+    import android.os.Bundle
+    import android.view.MotionEvent
+    import android.widget.TextView
+    import androidx.appcompat.app.AppCompatActivity
 
-          cat <<EOF > app/app/src/main/java/com/aim/pro/MainActivity.kt
-          package com.aim.pro
+    class MainActivity : AppCompatActivity() {
 
-          import android.os.Bundle
-          import android.view.MotionEvent
-          import android.widget.TextView
-          import androidx.appcompat.app.AppCompatActivity
+        private var lastX = 0f
+        private var lastY = 0f
 
-          class MainActivity : AppCompatActivity() {
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
 
-              private var lastX = 0f
-              private var lastY = 0f
+            val tv = TextView(this)
+            tv.text = "AimPro REAL 🎯🔥"
+            tv.textSize = 24f
 
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
+            setContentView(tv)
+        }
 
-                  val tv = TextView(this)
-                  tv.text = "AimPro ativo 🎯"
-                  tv.textSize = 22f
+        override fun onTouchEvent(event: MotionEvent): Boolean {
 
-                  setContentView(tv)
-              }
+            val dx = event.x - lastX
+            val dy = event.y - lastY
 
-              override fun onTouchEvent(event: MotionEvent): Boolean {
+            val velocity = Math.sqrt((dx*dx + dy*dy).toDouble()).toFloat()
 
-                  val dx = event.x - lastX
-                  val dy = event.y - lastY
+            val factor = when {
+                velocity > 30 -> 0.2f
+                velocity < 5 -> 0.8f
+                else -> 0.5f
+            }
 
-                  val velocity = Math.sqrt((dx*dx + dy*dy).toDouble()).toFloat()
+            lastX = event.x
+            lastY = event.y
 
-                  val factor = when {
-                      velocity > 30 -> 0.2f
-                      velocity < 5 -> 0.8f
-                      else -> 0.5f
-                  }
+            return true
+        }
+    }
+    EOF
 
-                  val finalDx = dx * factor
-                  val finalDy = dy * factor
+    # Corrige o AndroidManifest
+    cat <<EOF > app/app/src/main/AndroidManifest.xml
+    <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.aim.pro">
 
-                  lastX = event.x
-                  lastY = event.y
-
-                  return true
-              }
-          }
-          EOF
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Build APK
-        run: |
-          cd app
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: aimpro-final
-          path: app/**/build/outputs/apk/debug/*.apk
+        <application android:label="AimPro">
+            <activity android:name=".MainActivity">
+                <intent-filter>
+                    <action android:name="android.intent.action.MAIN"/>
+                    <category android:name="android.intent.category.LAUNCHER"/>
+                </intent-filter>
+            </activity>
+        </application>
+    </manifest>
+    EOF
