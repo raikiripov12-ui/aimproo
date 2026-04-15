@@ -1,4 +1,4 @@
-name: Build APK REAL
+name: Build AimPro APK
 
 on:
   workflow_dispatch:
@@ -8,9 +8,60 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar projeto pronto
+      - name: Criar projeto
         run: |
           git clone https://github.com/android/architecture-samples.git app
+
+      - name: Substituir código pelo AimPro
+        run: |
+          mkdir -p app/app/src/main/java/com/aim/pro
+
+          cat <<EOF > app/app/src/main/java/com/aim/pro/MainActivity.kt
+          package com.aim.pro
+
+          import android.os.Bundle
+          import android.view.MotionEvent
+          import android.widget.TextView
+          import androidx.appcompat.app.AppCompatActivity
+
+          class MainActivity : AppCompatActivity() {
+
+              private var lastX = 0f
+              private var lastY = 0f
+
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+
+                  val tv = TextView(this)
+                  tv.text = "AimPro ativo 🎯"
+                  tv.textSize = 22f
+
+                  setContentView(tv)
+              }
+
+              override fun onTouchEvent(event: MotionEvent): Boolean {
+
+                  val dx = event.x - lastX
+                  val dy = event.y - lastY
+
+                  val velocity = Math.sqrt((dx*dx + dy*dy).toDouble()).toFloat()
+
+                  val factor = when {
+                      velocity > 30 -> 0.2f
+                      velocity < 5 -> 0.8f
+                      else -> 0.5f
+                  }
+
+                  val finalDx = dx * factor
+                  val finalDy = dy * factor
+
+                  lastX = event.x
+                  lastY = event.y
+
+                  return true
+              }
+          }
+          EOF
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -27,5 +78,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: apk-real
+          name: aimpro-final
           path: app/**/build/outputs/apk/debug/*.apk
